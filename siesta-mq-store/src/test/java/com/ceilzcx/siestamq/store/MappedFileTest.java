@@ -3,6 +3,7 @@ package com.ceilzcx.siestamq.store;
 import com.ceilzcx.siestamq.common.UtilAll;
 import com.ceilzcx.siestamq.store.logfile.DefaultMappedFile;
 import com.ceilzcx.siestamq.store.logfile.MappedFile;
+import com.ceilzcx.siestamq.store.result.SelectMappedBufferResult;
 import org.junit.After;
 import org.junit.Test;
 
@@ -24,9 +25,9 @@ public class MappedFileTest {
             String message = "hello world";
             mappedFile.appendMessage(message.getBytes(StandardCharsets.UTF_8));
 
-            ByteBuffer byteBuffer = mappedFile.selectMappedBuffer(0);
+            SelectMappedBufferResult result = mappedFile.selectMappedBuffer(0);
             byte[] data = new byte[message.length()];
-            byteBuffer.get(data);
+            result.getByteBuffer().get(data);
             System.out.println(new String(data));
         } catch (IOException e) {
             e.printStackTrace();

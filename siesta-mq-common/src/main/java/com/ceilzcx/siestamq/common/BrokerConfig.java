@@ -3,7 +3,7 @@ package com.ceilzcx.siestamq.common;
 import com.ceilzcx.siestamq.common.utils.NetworkUtil;
 
 /**
- * @author hujiaofen
+ * @author ceilzcx
  * @since 17/12/2022
  */
 public class BrokerConfig {

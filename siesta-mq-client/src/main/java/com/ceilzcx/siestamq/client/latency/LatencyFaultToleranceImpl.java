@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @author hujiaofen
+ * @author ceilzcx
  * @since 4/4/2023
  */
 public class LatencyFaultToleranceImpl implements LatencyFaultTolerance<String> {

@@ -4,7 +4,7 @@ import com.ceilzcx.siestamq.remoting.CommandCustomHeader;
 import com.ceilzcx.siestamq.remoting.exception.RemotingCommandException;
 
 /**
- * @author hujiaofen
+ * @author ceilzcx
  * @since 16/12/2022
  */
 public class CreateTopicRequestHeader implements CommandCustomHeader {
