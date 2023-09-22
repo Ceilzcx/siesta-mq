@@ -126,7 +126,6 @@ public class DefaultMQProducerImpl implements MQProducerInner {
 
                         SendResult sendResult = this.sendKernelImpl(messageQueue, communicationMode, callback, topicPublishInfo, timeout);
 
-                        // todo updateFaultItem
                         this.updateFaultItem(messageQueue.getBrokerName(), System.currentTimeMillis() - beginTimestampFirst, false);
 
                         switch (communicationMode) {
@@ -158,6 +157,22 @@ public class DefaultMQProducerImpl implements MQProducerInner {
             final TopicPublishInfo topicPublishInfo,
             final long timeout) throws MQClientException, RemotingException {
 
+        // todo getBrokerName 为什么不知道用messageQueue.brokerName
+        String brokerName = messageQueue.getBrokerName();
+        String brokerAddress = this.mQClientFactory.findMasterBrokerAddress(brokerName);
+
+        if (brokerAddress == null) {
+            this.tryToFindTopicPublishInfo(messageQueue.getTopic());
+            brokerAddress = this.mQClientFactory.findMasterBrokerAddress(brokerName);
+        }
+
+        if (brokerAddress != null) {
+
+            // todo vip channel
+
+
+        }
+
         return null;
     }
 
@@ -177,7 +192,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         return this.mqFaultStrategy.selectOneMessageQueue(topicPublishInfo, lastBrokerName);
     }
 
-    private void updateFaultItem(final String brokerName, final long currentLatency, boolean isolation) {
+    public void updateFaultItem(final String brokerName, final long currentLatency, boolean isolation) {
         this.mqFaultStrategy.updateFaultItem(brokerName, currentLatency, isolation);
     }
 

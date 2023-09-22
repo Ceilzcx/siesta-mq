@@ -18,6 +18,7 @@ public class MQClientManager {
     private static final MQClientManager instance = new MQClientManager();
 
     // key: clientId
+    // 个人开发中, 因为这个遇到过问题, 同一个应用配置了两个mq消费, 没有修改instanceName, 导致key一样, 其中一个没有生效
     private final ConcurrentMap<String, MQClientInstance> instanceTable = new ConcurrentHashMap<>();
 
     private MQClientManager() {

@@ -9,16 +9,19 @@ import com.ceilzcx.siestamq.client.impl.consumer.RebalanceService;
 import com.ceilzcx.siestamq.client.impl.producer.DefaultMQProducerImpl;
 import com.ceilzcx.siestamq.client.impl.producer.MQProducerInner;
 import com.ceilzcx.siestamq.client.producer.DefaultMQProducer;
+import com.ceilzcx.siestamq.client.producer.TopicPublishInfo;
 import com.ceilzcx.siestamq.common.MixAll;
 import com.ceilzcx.siestamq.common.ServiceState;
 import com.ceilzcx.siestamq.common.message.MessageQueue;
 import com.ceilzcx.siestamq.common.topic.TopicValidator;
 import com.ceilzcx.siestamq.remoting.RPCHook;
-import com.ceilzcx.siestamq.remoting.exception.RemotingException;
 import com.ceilzcx.siestamq.remoting.netty.config.NettyClientConfig;
 
+import com.ceilzcx.siestamq.remoting.protocol.route.BrokerData;
 import com.ceilzcx.siestamq.remoting.protocol.route.QueueData;
 import com.ceilzcx.siestamq.remoting.protocol.route.TopicRouteData;
+
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -26,6 +29,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +55,7 @@ public class MQClientInstance {
 
     private ServiceState serviceState;
 
+    // key: topic, value: MQProducer
     private final ConcurrentMap<String, MQProducerInner> producerTable = new ConcurrentHashMap<>();
 
     // key: topic, value: Map[key: message queue, value: broker name]
@@ -61,6 +66,10 @@ public class MQClientInstance {
     // key: topic, value: topic route data
     // 从nameserver获取的route信息, 快照用于减少nameserver处查询, 和判断是否存在更新
     private final ConcurrentMap<String, TopicRouteData> topicRouteTable = new ConcurrentHashMap<>();
+
+    // key: broker name, value: Map[key: broker id, value: broker address]
+    // 一个brokerName对应多个brokerId? master/slave模式, brokerName一样, master的brokerId=0, slave的brokerId>0
+    private final ConcurrentMap<String, HashMap<Long, String>> brokerAddrTable = new ConcurrentHashMap<>();
 
     private final ScheduledExecutorService scheduledExecutorService =
             Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "MQClientFactoryScheduledThread"));
@@ -152,6 +161,10 @@ public class MQClientInstance {
         return true;
     }
 
+    public boolean updateTopicRouteInfoFromNameServer(final String topic) {
+        return this.updateTopicRouteInfoFromNameServer(topic, false, null);
+    }
+
     public boolean updateTopicRouteInfoFromNameServer(final String topic, boolean isDefault, DefaultMQProducer defaultMQProducer) {
         try {
             if (this.lockNameServer.tryLock()) {
@@ -174,9 +187,23 @@ public class MQClientInstance {
                     TopicRouteData oldTopicRouteData = this.topicRouteTable.get(topic);
                     boolean isChange = topicRouteData.topicRouteDataChanged(oldTopicRouteData);
                     if (!isChange) {
-
+                        // todo 这里还有一步校验规则, 校验Producer的TopicPublishInfo是否有效, 不清楚这步操作的含义
                     } else {
                         log.info("the topic[{}] route info changed, old[{}] ,new[{}]", topic, oldTopicRouteData, topicRouteData);
+                    }
+
+                    if (isChange) {
+
+                        // 更新brokerAddrTable
+                        for (BrokerData brokerData : topicRouteData.getBrokerDatas()) {
+                            this.brokerAddrTable.put(brokerData.getBrokerName(), brokerData.getBrokerAddrs());
+                        }
+
+                        // todo update endpointTable: invoke topicRouteDataToEndpointsForTopic
+
+                        // 更新各个producer的topicPublishInfo
+
+
                     }
                 }
             }
@@ -192,6 +219,49 @@ public class MQClientInstance {
         }
 
         return true;
+    }
+
+//    todo 首先不理解为什么要放在remoting模块, 其次对于static topic理解不深刻
+//    public static ConcurrentMap<MessageQueue, String> topicRouteDataToEndpointsForTopic(final String topic, final TopicRouteData topicRouteData) {
+//    }
+
+    public static TopicPublishInfo topicRouteDataToTopicPublishInfo(final String topic, final TopicRouteData topicRouteData) {
+        TopicPublishInfo topicPublishInfo = new TopicPublishInfo();
+        topicPublishInfo.setTopicRouteData(topicRouteData);
+
+        // 是否设置了顺序发送消息
+        if (topicRouteData.getOrderTopicConf() != null && topicRouteData.getOrderTopicConf().length() > 0) {
+            String[] brokers = topicRouteData.getOrderTopicConf().split(";");
+            for (String broker : brokers) {
+                String[] items = broker.split(":");
+                int nums = Integer.parseInt(items[1]);
+                for (int i = 0; i < nums; i++) {
+                    MessageQueue messageQueue = new MessageQueue(topic, items[0], i);
+                    topicPublishInfo.getMessageQueueList().add(messageQueue);
+                }
+            }
+            topicPublishInfo.setOrderTopic(true);
+        } else if (topicRouteData.getOrderTopicConf() == null
+                && topicRouteData.getTopicQueueMappingByBroker() != null
+                && !topicRouteData.getTopicQueueMappingByBroker().isEmpty()) {
+            // todo
+        } else {
+
+        }
+
+
+        return topicPublishInfo;
+    }
+
+    public String findMasterBrokerAddress(final String brokerName) {
+        if (brokerName == null) {
+            return null;
+        }
+        HashMap<Long, String> map = this.brokerAddrTable.get(brokerName);
+        if (map != null) {
+            return map.get(MixAll.MASTER_ID);
+        }
+        return null;
     }
 
     public String getClientId() {

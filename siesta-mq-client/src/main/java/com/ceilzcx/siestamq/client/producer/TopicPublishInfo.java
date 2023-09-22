@@ -14,6 +14,8 @@ import java.util.List;
  */
 public class TopicPublishInfo {
 
+    private boolean orderTopic = false;
+
     private List<MessageQueue> messageQueueList = new ArrayList<>();
     private TopicRouteData topicRouteData;
 
@@ -72,5 +74,13 @@ public class TopicPublishInfo {
             }
         }
         return -1;
+    }
+
+    public boolean isOrderTopic() {
+        return orderTopic;
+    }
+
+    public void setOrderTopic(boolean orderTopic) {
+        this.orderTopic = orderTopic;
     }
 }

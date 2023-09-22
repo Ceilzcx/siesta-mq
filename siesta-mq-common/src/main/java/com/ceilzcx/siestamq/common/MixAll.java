@@ -16,4 +16,6 @@ public class MixAll {
 
     // 消息重试时的topic前缀
     public static final String RETRY_GROUP_TOPIC_PREFIX = "%RETRY%";
+
+    public static final String REPLY_MESSAGE_FLAG = "reply";
 }

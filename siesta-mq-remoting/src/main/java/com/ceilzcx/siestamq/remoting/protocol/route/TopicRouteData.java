@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentMap;
  * @since 3/4/2023
  */
 public class TopicRouteData extends RemotingSerializable {
+    // 顺序发送消息, 例: brokerName1:queue num1;brokerName2:queue num2
     private String orderTopicConf;
     private List<QueueData> queueDatas;
     private List<BrokerData> brokerDatas;

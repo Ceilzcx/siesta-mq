@@ -67,7 +67,7 @@ public class MQFaultStrategy {
      */
     public void updateFaultItem(final String brokerName, final long currentLatency, boolean isolation) {
         if (this.isSendLatencyFaultEnable()) {
-            long notAvailableDuration = this.computeNotAvailableDuration(isolation ? 30000: currentLatency);
+            long notAvailableDuration = this.computeNotAvailableDuration(isolation ? 30000L: currentLatency);
             latencyFaultTolerance.updateFaultItem(brokerName, currentLatency, notAvailableDuration);
         }
     }

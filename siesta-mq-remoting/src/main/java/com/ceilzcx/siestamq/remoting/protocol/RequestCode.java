@@ -6,6 +6,8 @@ package com.ceilzcx.siestamq.remoting.protocol;
  */
 public class RequestCode {
 
+    public static final int SEND_MESSAGE = 10;
+
     public static final int PULL_MESSAGE = 11;
 
     public static final int UPDATE_AND_CREATE_TOPIC = 17;
@@ -15,6 +17,10 @@ public class RequestCode {
     public static final int GET_ROUTE_DATA_BY_TOPIC = 105;
 
     public static final int REGISTER_TOPIC_IN_NAMESERVER = 217;
+
+    public static final int SEND_BATCH_MESSAGE = 320;
+
+    public static final int SEND_REPLY_MESSAGE_V2 = 325;
 
     public static final int LITE_PULL_MESSAGE = 361;
 }
