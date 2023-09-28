@@ -1,5 +1,6 @@
 package com.ceilzcx.siestamq.remoting;
 
+import com.ceilzcx.siestamq.remoting.exception.RemotingCommandException;
 import com.ceilzcx.siestamq.remoting.netty.ResponseFuture;
 
 /**
@@ -9,5 +10,5 @@ import com.ceilzcx.siestamq.remoting.netty.ResponseFuture;
  */
 public interface InvokeCallback {
 
-    void operationComplete(final ResponseFuture responseFuture);
+    void operationComplete(final ResponseFuture responseFuture) throws RemotingCommandException, MQBrokerException;
 }

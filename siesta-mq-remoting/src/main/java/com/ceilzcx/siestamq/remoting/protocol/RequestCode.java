@@ -20,6 +20,8 @@ public class RequestCode {
 
     public static final int SEND_BATCH_MESSAGE = 320;
 
+    public static final int SEND_REPLY_MESSAGE = 324;
+
     public static final int SEND_REPLY_MESSAGE_V2 = 325;
 
     public static final int LITE_PULL_MESSAGE = 361;

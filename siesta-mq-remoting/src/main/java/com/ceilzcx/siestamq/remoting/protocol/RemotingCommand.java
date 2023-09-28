@@ -14,6 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author ceilzcx
@@ -60,6 +61,8 @@ public class RemotingCommand {
     private transient byte[] body;
 
     private SerializeType serializeTypeCurrentRPC = serializeTypeConfigInThisServer;
+
+    private static final AtomicInteger requestId = new AtomicInteger(0);
 
     public static RemotingCommand createRequestCommand(int code, CommandCustomHeader customHeader) {
         RemotingCommand cmd = new RemotingCommand();
@@ -412,6 +415,10 @@ public class RemotingCommand {
             }
         }
         return name;
+    }
+
+    public static int createNewRequestId() {
+        return requestId.getAndIncrement();
     }
 
     public static int markProtocolType(int source, SerializeType type) {

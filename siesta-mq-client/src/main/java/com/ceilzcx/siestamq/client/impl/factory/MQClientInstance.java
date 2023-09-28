@@ -60,8 +60,10 @@ public class MQClientInstance {
 
     // key: topic, value: Map[key: message queue, value: broker name]
     // 存储一份快照, 获取topic & message queue 对应的broker name时使用
-    // todo 不明白为什么需要加这份快照, MessageQueue中存有brokerName
-    private final ConcurrentMap<String, ConcurrentHashMap<MessageQueue, String>> topicEndPointsTable = new ConcurrentHashMap<>();
+    // todo 不明白为什么需要加这份快照, MessageQueue中存有brokerName, 需要更新不能直接set吗?
+    // todo 而且topic是从MessageQueue获取的, 直接去掉key是不是可以, 这里使用messageQueueEndPointsTable
+    // private final ConcurrentMap<String, ConcurrentHashMap<MessageQueue, String>> topicEndPointsTable = new ConcurrentHashMap<>();
+    private final ConcurrentMap<MessageQueue, String> messageQueueEndPointsTable = new ConcurrentHashMap<>();
 
     // key: topic, value: topic route data
     // 从nameserver获取的route信息, 快照用于减少nameserver处查询, 和判断是否存在更新
@@ -165,6 +167,9 @@ public class MQClientInstance {
         return this.updateTopicRouteInfoFromNameServer(topic, false, null);
     }
 
+    /**
+     * 调用netty查询namesrv, 更新topicRouteInfo信息
+     */
     public boolean updateTopicRouteInfoFromNameServer(final String topic, boolean isDefault, DefaultMQProducer defaultMQProducer) {
         try {
             if (this.lockNameServer.tryLock()) {
@@ -221,7 +226,7 @@ public class MQClientInstance {
         return true;
     }
 
-//    todo 首先不理解为什么要放在remoting模块, 其次对于static topic理解不深刻
+//    todo 首先不理解这个方法源码为什么要放在remoting模块, 其次对于static topic理解不深刻
 //    public static ConcurrentMap<MessageQueue, String> topicRouteDataToEndpointsForTopic(final String topic, final TopicRouteData topicRouteData) {
 //    }
 
@@ -264,7 +269,33 @@ public class MQClientInstance {
         return null;
     }
 
+    public String getBrokerNameFromMessageQueue(final MessageQueue messageQueue) {
+        String brokerName = this.messageQueueEndPointsTable.get(messageQueue);
+        if (brokerName != null) {
+            return brokerName;
+        }
+        return messageQueue.getBrokerName();
+    }
+
+    /**
+     * 通过brokerName查询broker的address
+     */
+    public String getBrokerAddressInPublish(final String brokerName) {
+        if (brokerName == null) {
+            return null;
+        }
+        // key: brokerId, value: address
+        HashMap<Long, String> map = this.brokerAddrTable.get(brokerName);
+        if (map != null && !map.isEmpty()) {
+            // 返回主节点的地址
+            return map.get(MixAll.MASTER_ID);
+        }
+        return null;
+    }
+
     public String getClientId() {
         return clientId;
     }
+
+
 }

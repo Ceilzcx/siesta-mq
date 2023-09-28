@@ -116,4 +116,16 @@ public class ResponseFuture {
     public InvokeCallback getInvokeCallback() {
         return invokeCallback;
     }
+
+    public long getBeginTimestamp() {
+        return beginTimestamp;
+    }
+
+    public int getOpaque() {
+        return opaque;
+    }
+
+    public long getTimeoutMillis() {
+        return timeoutMillis;
+    }
 }

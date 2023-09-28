@@ -1,6 +1,8 @@
 package com.ceilzcx.siestamq.client.impl.producer;
 
 import com.ceilzcx.siestamq.client.exception.MQClientException;
+import com.ceilzcx.siestamq.client.hook.SendMessageContext;
+import com.ceilzcx.siestamq.client.hook.SendMessageHook;
 import com.ceilzcx.siestamq.client.impl.CommunicationMode;
 import com.ceilzcx.siestamq.client.impl.MQClientManager;
 import com.ceilzcx.siestamq.client.impl.factory.MQClientInstance;
@@ -13,17 +15,23 @@ import com.ceilzcx.siestamq.common.message.Message;
 import com.ceilzcx.siestamq.common.message.MessageQueue;
 import com.ceilzcx.siestamq.remoting.RPCHook;
 import com.ceilzcx.siestamq.remoting.exception.RemotingException;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
 
 /**
  * @author ceilzcx
  * @since 3/4/2023
  */
+@Slf4j
 public class DefaultMQProducerImpl implements MQProducerInner {
 
     private ServiceState serviceState = ServiceState.CREATE_JUST;
 
     private final DefaultMQProducer defaultMQProducer;
     private final RPCHook rpcHook;
+
+    private final ArrayList<SendMessageHook> sendMessageHookList = new ArrayList<>();
 
     private MQClientInstance mQClientFactory;
 
@@ -188,12 +196,33 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         return null;
     }
 
-    private MessageQueue selectOneMessageQueue(TopicPublishInfo topicPublishInfo, String lastBrokerName) {
+    public MessageQueue selectOneMessageQueue(TopicPublishInfo topicPublishInfo, String lastBrokerName) {
         return this.mqFaultStrategy.selectOneMessageQueue(topicPublishInfo, lastBrokerName);
     }
 
     public void updateFaultItem(final String brokerName, final long currentLatency, boolean isolation) {
         this.mqFaultStrategy.updateFaultItem(brokerName, currentLatency, isolation);
+    }
+
+    public void registerSendMessageHook(final SendMessageHook hook) {
+        this.sendMessageHookList.add(hook);
+        log.info("register sendMessage Hook, {}", hook.hookName());
+    }
+
+    public void executeSendMessageHookBefore(final SendMessageContext context) {
+        for (SendMessageHook hook : this.sendMessageHookList) {
+            hook.sendMessageBefore(context);
+        }
+    }
+
+    public void executeSendMessageHookAfter(final SendMessageContext context) {
+        for (SendMessageHook hook : this.sendMessageHookList) {
+            hook.sendMessageAfter(context);
+        }
+    }
+
+    public MessageQueue selectOneMessageQueue(final TopicPublishInfo topicPublishInfo, final String lastBrokerName, final boolean resetIndex) {
+        return this.mqFaultStrategy.selectOneMessageQueue(topicPublishInfo, lastBrokerName);
     }
 
 }
