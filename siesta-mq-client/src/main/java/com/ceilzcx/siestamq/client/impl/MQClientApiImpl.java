@@ -12,10 +12,10 @@ import com.ceilzcx.siestamq.client.producer.TopicPublishInfo;
 import com.ceilzcx.siestamq.common.MixAll;
 import com.ceilzcx.siestamq.common.message.Message;
 import com.ceilzcx.siestamq.common.message.MessageBatch;
+import com.ceilzcx.siestamq.common.message.MessageClientIDSetter;
 import com.ceilzcx.siestamq.common.message.MessageConstants;
 import com.ceilzcx.siestamq.common.message.MessageQueue;
 import com.ceilzcx.siestamq.common.topic.TopicValidator;
-import com.ceilzcx.siestamq.remoting.CommandCustomHeader;
 import com.ceilzcx.siestamq.remoting.InvokeCallback;
 import com.ceilzcx.siestamq.remoting.RPCHook;
 import com.ceilzcx.siestamq.remoting.RemotingClient;
@@ -318,10 +318,13 @@ public class MQClientApiImpl {
 
         MessageQueue messageQueue = new MessageQueue(topic, brokerName, responseHeader.getQueueId());
 
+        String uniqID = MessageClientIDSetter.getUniqID(message);
+        SendResult sendResult = new SendResult(sendStatus, uniqID, responseHeader.getMsgId(), messageQueue, responseHeader.getQueueOffset());
 
+        sendResult.setTransactionId(responseHeader.getTransactionId());
+        // todo regionId 和 traceOn
 
-        // todo 处理response
-        return new SendResult();
+        return sendResult;
     }
 
     /**

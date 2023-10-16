@@ -33,4 +33,28 @@ public class SendMessageResponseHeader extends TopicQueueRequestHeader {
     public void setTopic(String topic) {
 
     }
+
+    public String getMsgId() {
+        return msgId;
+    }
+
+    public void setMsgId(String msgId) {
+        this.msgId = msgId;
+    }
+
+    public Long getQueueOffset() {
+        return queueOffset;
+    }
+
+    public void setQueueOffset(Long queueOffset) {
+        this.queueOffset = queueOffset;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
 }
